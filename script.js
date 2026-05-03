@@ -1,108 +1,136 @@
-let currentSalary = 0;
-let currentExpenses = 0;
+// The Master Data Object
+// Structure: { "YYYY-MM": { salary: 0, expenses: [] } }
+let historyData = JSON.parse(localStorage.getItem('salaryTrackerData')) || {};
+let currentMonthKey = ""; // Stores the currently viewed month (e.g., "2026-04")
 
-// *** Initialization & Date Defaults ***
 window.onload = function() {
     const today = new Date();
-    // Default the expense date input to today
-    document.getElementById('date').valueAsDate = today;
+    const yearMonth = today.toISOString().substring(0, 7);
     
-    // Default the salary month input to current month
-    const yearMonth = today.toISOString().substring(0, 7); // Format: YYYY-MM
+    // Set default inputs
+    document.getElementById('date').valueAsDate = today;
     document.getElementById('salaryMonthInput').value = yearMonth;
 
-    updateUI();
+    // Load the current month if it exists, otherwise leave blank
+    loadMonth(yearMonth);
 };
 
-// *** Functionality of the new '+' Icon ***
-const modal = document.getElementById('salaryModal');
+// --- Month Management ---
 
-function openSalaryModal() {
-    modal.classList.add('modal-open');
-}
-
-function closeSalaryModal() {
-    modal.classList.remove('modal-open');
-}
-
-// Close the modal if the user clicks outside of it
-window.onclick = function(event) {
-    if (event.target == modal) {
-        closeSalaryModal();
-    }
-}
-
-function setSalaryFromModal() {
-    const salaryInput = document.getElementById('modalSalaryInput');
-    const monthInput = document.getElementById('salaryMonthInput');
+function loadMonth(monthKey) {
+    currentMonthKey = monthKey;
+    const data = historyData[monthKey] || { salary: 0, expenses: [] };
     
-    const salaryValue = parseFloat(salaryInput.value);
-    const selectedMonth = monthInput.value;
-
-    if (isNaN(salaryValue) || salaryValue <= 0 || !selectedMonth) {
-        alert("Please enter a valid salary and month.");
-        return;
-    }
-
-    // Set the data
-    currentSalary = salaryValue;
-    currentExpenses = 0; // Reset expenses for the new month setup
-    document.getElementById('expenseList').innerHTML = ''; // Clear the table
-
-    // Update the Month Name in the header
-    const dateObj = new Date(selectedMonth);
+    // Update Header
+    const dateObj = new Date(monthKey + "-01");
     const monthName = dateObj.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     document.getElementById('currentMonthName').innerText = monthName;
 
-    // Reset the last update time
-    const today = new Date();
-    document.getElementById('lastUpdateText').innerText = 'Set on ' + today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric'});
-
+    // Update UI
+    renderExpenses();
     updateUI();
-    closeSalaryModal();
-    // Clear modal inputs for next use
-    salaryInput.value = '';
 }
 
-// *** Main Expense Functionality ***
-function addExpense() {
-    const desc = document.getElementById('desc').value;
-    const amount = parseFloat(document.getElementById('amount').value);
-    const dateInput = document.getElementById('date').value;
+function setSalaryFromModal() {
+    const salaryValue = parseFloat(document.getElementById('modalSalaryInput').value);
+    const monthKey = document.getElementById('salaryMonthInput').value;
 
-    if (!desc || isNaN(amount) || amount <= 0 || !dateInput) {
-        alert("Please fill in all valid expense details.");
+    if (isNaN(salaryValue) || !monthKey) {
+        alert("Please enter valid data");
         return;
     }
 
-    // Subtract from balance logic
-    currentExpenses += amount;
+    // Initialize month in history if it doesn't exist
+    if (!historyData[monthKey]) {
+        historyData[monthKey] = { salary: 0, expenses: [] };
+    }
 
-    // Add row to the table with formatting matching the image
-    const tableBody = document.getElementById('expenseList');
-    const row = tableBody.insertRow(0); // Insert at the top
+    historyData[monthKey].salary = salaryValue;
+    saveAndSync();
+    loadMonth(monthKey); // Switch view to the month we just edited
+    closeSalaryModal();
+}
 
-    const formattedDate = new Date(dateInput).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+// --- Expense Management ---
 
-    row.innerHTML = `
-        <td>${formattedDate}</td>
-        <td>${desc}</td>
-        <td class="expense-amount">- ₹${amount.toFixed(2)}</td>
-    `;
+function addExpense() {
+    if (!currentMonthKey || !historyData[currentMonthKey]) {
+        alert("Please set a Salary for this month first using the + icon!");
+        return;
+    }
 
-    // Clear main inputs
+    const desc = document.getElementById('desc').value;
+    const amount = parseFloat(document.getElementById('amount').value);
+    const date = document.getElementById('date').value;
+
+    if (!desc || isNaN(amount) || !date) {
+        alert("Fill all fields");
+        return;
+    }
+
+    // Push to the history object
+    historyData[currentMonthKey].expenses.push({ date, desc, amount });
+    
+    saveAndSync();
+    renderExpenses();
+    updateUI();
+
+    // Clear inputs
     document.getElementById('desc').value = '';
     document.getElementById('amount').value = '';
+}
+
+// --- UI Rendering ---
+
+function renderExpenses() {
+    const tableBody = document.getElementById('expenseList');
+    tableBody.innerHTML = ''; // Clear table
     
-    updateUI();
+    const expenses = historyData[currentMonthKey]?.expenses || [];
+
+    // Sort expenses by date (newest first)
+    const sorted = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    sorted.forEach(item => {
+        const row = tableBody.insertRow();
+        const formattedDate = new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        row.innerHTML = `
+            <td>${formattedDate}</td>
+            <td>${item.desc}</td>
+            <td class="expense-amount">- ₹${item.amount.toLocaleString('en-IN')}</td>
+        `;
+    });
 }
 
 function updateUI() {
-    const currentBalance = currentSalary - currentExpenses;
+    const data = historyData[currentMonthKey] || { salary: 0, expenses: [] };
+    const totalSalary = data.salary;
+    const totalExpenses = data.expenses.reduce((sum, item) => sum + item.amount, 0);
+    const balance = totalSalary - totalExpenses;
+
+    document.getElementById('salaryDisplay').innerText = totalSalary.toLocaleString('en-IN');
+    document.getElementById('expensesDisplay').innerText = totalExpenses.toLocaleString('en-IN');
+    document.getElementById('expensesDisplayTotal').innerText = totalExpenses.toLocaleString('en-IN');
+    document.getElementById('balance').innerText = balance.toLocaleString('en-IN');
+}
+
+function saveAndSync() {
+    localStorage.setItem('salaryTrackerData', JSON.stringify(historyData));
+}
+
+// --- Navigation (The History Icon) ---
+function toggleHistoryList() {
+    // We will build a simple month-selector dropdown or sidebar list here
+    const months = Object.keys(historyData).sort().reverse();
+    if (months.length === 0) {
+        alert("No history found yet!");
+        return;
+    }
     
-    // Standard Formatting
-    document.getElementById('salaryDisplay').innerText = currentSalary.toLocaleString('en-IN');
-    document.getElementById('expensesDisplay').innerText = currentExpenses.toLocaleString('en-IN');
-    document.getElementById('expensesDisplayTotal').innerText = currentExpenses.toLocaleString('en-IN');
-    document.getElementById('balance').innerText = currentBalance.toLocaleString('en-IN');
+    let message = "Select a month to view:\n" + months.join("\n");
+    let choice = prompt(message, currentMonthKey);
+    
+    if (choice && historyData[choice]) {
+        loadMonth(choice);
+    }
 }
