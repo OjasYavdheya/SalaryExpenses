@@ -86,10 +86,6 @@ header h1 span {
     color: var(--text-secondary);
 }
 
-header p {
-    color: var(--text-secondary);
-    font-size: 14px;
-}
 
 /* Grid & Panels */
 .dashboard-grid {
