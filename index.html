@@ -3,50 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Salary Expense Tracker</title>
+    <title>Personal Finance Tracker Pro</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Optional: Add Google Icons for better visual fidelity like the image -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 </head>
-<body>
+<body class="dark-theme">
 
-    <div class="container">
-        <h1>Salary Manager</h1>
+    <div class="sidebar">
+        <div class="logo">PFTP</div>
         
-        <!-- Salary Input -->
-        <div class="section">
-            <label>Set Total Salary:</label>
-            <input type="number" id="totalSalary" placeholder="e.g. 3000">
-            <button onclick="setSalary()">Set Salary</button>
+        <!-- *** NEW: Quick Add Salary Icon *** -->
+        <button class="nav-icon active-nav" onclick="openSalaryModal()" title="Add New Month/Salary">
+            <span class="material-symbols-outlined">add_circle</span>
+        </button>
+        
+        <!-- *** Placeholder for Future Functionality *** -->
+        <button class="nav-icon" title="View Previous Months (Future feature)">
+            <span class="material-symbols-outlined">history</span>
+        </button>
+
+        <button class="nav-icon">
+            <span class="material-symbols-outlined">settings</span>
+        </button>
+    </div>
+
+    <div class="main-content">
+        <header>
+            <h1>Personal Finance Tracker | <span id="currentMonthName">Dashboard</span></h1>
+            <p>Welcome Back, User!</p>
+        </header>
+
+        <div class="dashboard-grid">
+            
+            <!-- Left Panel (Inputs) -->
+            <div class="input-panel panel">
+                <div class="section">
+                    <h3>ADD NEW EXPENSE</h3>
+                    <input type="text" id="desc" placeholder="Expense Description (e.g., Momos)">
+                    <input type="number" id="amount" placeholder="Amount (₹)">
+                    
+                    <div class="input-row">
+                        <input type="date" id="date">
+                        <button class="primary-btn" onclick="addExpense()">Log Expense</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel (Stats & List) -->
+            <div class="stats-panel panel">
+                <div class="kpi-row">
+                    <div class="kpi-card teal-card">
+                        <span class="material-symbols-outlined">wallet</span>
+                        <div class="kpi-info">
+                            <span class="label">Total Salary</span>
+                            <span class="value">₹<span id="salaryDisplay">0</span></span>
+                        </div>
+                    </div>
+                    <div class="kpi-card red-card">
+                        <span class="material-symbols-outlined">payments</span>
+                        <div class="kpi-info">
+                            <span class="label">Total Expenses</span>
+                            <span class="value">₹<span id="expensesDisplay">0</span></span>
+                        </div>
+                    </div>
+                    <div class="kpi-card green-card accent-card">
+                        <span class="material-symbols-outlined">trending_up</span>
+                        <div class="kpi-info">
+                            <span class="label">Current Balance</span>
+                            <span class="value">₹<span id="balance">0</span></span>
+                            <span class="last-update" id="lastUpdateText">Start Logging</span>
+                        </div>
+                    </div>
+                </div>
+
+                <table id="expenseTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expenseList">
+                        <!-- Rows will be added here by JS -->
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="2">Month Total:</td>
+                            <td class="total-count">₹<span id="expensesDisplayTotal">0</span></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
         </div>
+    </div>
 
-        <hr>
-
-        <!-- Expense Input -->
-        <div class="section">
-            <h3>Add Expense</h3>
-            <input type="text" id="desc" placeholder="What did you buy?">
-            <input type="number" id="amount" placeholder="Amount">
-            <input type="date" id="date">
-            <button onclick="addExpense()">Add Expense</button>
+    <!-- *** NEW: Salary Input Popup (Modal) *** -->
+    <div id="salaryModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeSalaryModal()">&times;</span>
+            <h3>SET NEW MONTHLY SALARY</h3>
+            <div class="input-panel">
+                <input type="month" id="salaryMonthInput">
+                <input type="number" id="modalSalaryInput" placeholder="Enter Salary Amount (₹)">
+                <button class="primary-btn" onclick="setSalaryFromModal()">Update Salary</button>
+            </div>
         </div>
-
-        <!-- Dashboard -->
-        <div class="dashboard">
-            <h2>Balance: ₹<span id="balance">0</span></h2>
-        </div>
-
-        <!-- History Table -->
-        <table id="expenseTable">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Description</th>
-                    <th>Amount</th>
-                </tr>
-            </thead>
-            <tbody id="expenseList">
-                <!-- Rows will be added here by JS -->
-            </tbody>
-        </table>
     </div>
 
     <script src="script.js"></script>
