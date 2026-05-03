@@ -15,6 +15,14 @@ window.onload = function() {
     loadMonth(yearMonth);
 };
 
+function openSalaryModal() {
+    document.getElementById('salaryModal').classList.add('modal-open');
+}
+
+function closeSalaryModal() {
+    document.getElementById('salaryModal').classList.remove('modal-open');
+}
+
 // --- Month Management ---
 
 function loadMonth(monthKey) {
@@ -94,11 +102,14 @@ function renderExpenses() {
     sorted.forEach(item => {
         const row = tableBody.insertRow();
         const formattedDate = new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        row.innerHTML = `
-            <td>${formattedDate}</td>
-            <td>${item.desc}</td>
-            <td class="expense-amount">- ₹${item.amount.toLocaleString('en-IN')}</td>
-        `;
+        const dateCell = row.insertCell();
+        const descCell = row.insertCell();
+        const amountCell = row.insertCell();
+
+        dateCell.textContent = formattedDate;
+        descCell.textContent = item.desc;
+        amountCell.className = 'expense-amount';
+        amountCell.textContent = `- ₹${item.amount.toLocaleString('en-IN')}`;
     });
 }
 
