@@ -19,7 +19,30 @@ window.onload = async function() {
     loadMonth(yearMonth);
 };
 
+function loadDataFromLocalStorage() {
+    const raw = localStorage.getItem('salaryTrackerData');
+    if (!raw) {
+        return;
+    }
+
+    try {
+        const parsed = JSON.parse(raw);
+        if (isValidHistoryData(parsed)) {
+            historyData = parsed;
+        } else {
+            console.warn('Skipped localStorage data: Invalid format.');
+        }
+    } catch (error) {
+        console.warn('Unable to parse localStorage data.', error);
+    }
+}
+
 async function autoImportDataFromLocalJson() {
+    if (!['http:', 'https:'].includes(window.location.protocol)) {
+        // fetch('data.json') does not work reliably on file:// URLs.
+        return;
+    }
+
     try {
         const response = await fetch(AUTO_IMPORT_FILE, { cache: 'no-store' });
         if (!response.ok) {
