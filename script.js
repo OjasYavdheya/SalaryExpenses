@@ -1,19 +1,48 @@
 // The Master Data Object
 // Structure: { "YYYY-MM": { salary: 0, expenses: [] } }
-let historyData = JSON.parse(localStorage.getItem('salaryTrackerData')) || {};
+let historyData = {};
 let currentMonthKey = ""; // Stores the currently viewed month (e.g., "2026-04")
 
-window.onload = function() {
+const AUTO_IMPORT_CANDIDATES = ['salaryTrackerData.json', 'data.json'];
+
+window.onload = async function() {
     const today = new Date();
     const yearMonth = today.toISOString().substring(0, 7);
-    
+
     // Set default inputs
     document.getElementById('date').valueAsDate = today;
     document.getElementById('salaryMonthInput').value = yearMonth;
 
+    await autoImportDataFromLocalJson();
+
     // Load the current month if it exists, otherwise leave blank
     loadMonth(yearMonth);
 };
+
+async function autoImportDataFromLocalJson() {
+    for (const fileName of AUTO_IMPORT_CANDIDATES) {
+        try {
+            const response = await fetch(fileName, { cache: 'no-store' });
+            if (!response.ok) {
+                continue;
+            }
+
+            const content = await response.json();
+            const importedHistory = content?.historyData ?? content;
+
+            if (!isValidHistoryData(importedHistory)) {
+                console.warn(`Skipped ${fileName}: Invalid format.`);
+                continue;
+            }
+
+            historyData = importedHistory;
+            console.info(`Auto-loaded data from ${fileName}.`);
+            return;
+        } catch (error) {
+            console.warn(`Unable to auto-load ${fileName}.`, error);
+        }
+    }
+}
 
 function openSalaryModal() {
     document.getElementById('salaryModal').classList.add('modal-open');
