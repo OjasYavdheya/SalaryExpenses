@@ -192,10 +192,6 @@ function exportData() {
     URL.revokeObjectURL(url);
 }
 
-function triggerImport() {
-    document.getElementById('importFileInput').click();
-}
-
 function isValidHistoryData(data) {
     if (!data || typeof data !== 'object' || Array.isArray(data)) {
         return false;
@@ -222,37 +218,4 @@ function isValidHistoryData(data) {
             !Number.isNaN(expense.amount)
         ));
     });
-}
-
-function importData(event) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(loadEvent) {
-        try {
-            const content = JSON.parse(loadEvent.target.result);
-            const importedHistory = content?.historyData ?? content;
-
-            if (!isValidHistoryData(importedHistory)) {
-                throw new Error('Invalid backup file format.');
-            }
-
-            historyData = importedHistory;
-            saveAndSync();
-
-            const months = Object.keys(historyData).sort();
-            const latestMonth = months[months.length - 1] || new Date().toISOString().slice(0, 7);
-            loadMonth(latestMonth);
-
-            alert('Backup restored successfully.');
-        } catch (error) {
-            alert('Could not import this file. Please select a valid backup JSON.');
-            console.error(error);
-        } finally {
-            event.target.value = '';
-        }
-    };
-
-    reader.readAsText(file);
 }
