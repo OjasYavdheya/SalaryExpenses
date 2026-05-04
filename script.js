@@ -3,7 +3,7 @@
 let historyData = {};
 let currentMonthKey = ""; // Stores the currently viewed month (e.g., "2026-04")
 
-const AUTO_IMPORT_CANDIDATES = ['salaryTrackerData.json', 'data.json'];
+const AUTO_IMPORT_FILE = 'data.json';
 
 window.onload = async function() {
     const today = new Date();
@@ -20,27 +20,24 @@ window.onload = async function() {
 };
 
 async function autoImportDataFromLocalJson() {
-    for (const fileName of AUTO_IMPORT_CANDIDATES) {
-        try {
-            const response = await fetch(fileName, { cache: 'no-store' });
-            if (!response.ok) {
-                continue;
-            }
-
-            const content = await response.json();
-            const importedHistory = content?.historyData ?? content;
-
-            if (!isValidHistoryData(importedHistory)) {
-                console.warn(`Skipped ${fileName}: Invalid format.`);
-                continue;
-            }
-
-            historyData = importedHistory;
-            console.info(`Auto-loaded data from ${fileName}.`);
+    try {
+        const response = await fetch(AUTO_IMPORT_FILE, { cache: 'no-store' });
+        if (!response.ok) {
             return;
-        } catch (error) {
-            console.warn(`Unable to auto-load ${fileName}.`, error);
         }
+
+        const content = await response.json();
+        const importedHistory = content?.historyData ?? content;
+
+        if (!isValidHistoryData(importedHistory)) {
+            console.warn(`Skipped ${AUTO_IMPORT_FILE}: Invalid format.`);
+            return;
+        }
+
+        historyData = importedHistory;
+        console.info(`Auto-loaded data from ${AUTO_IMPORT_FILE}.`);
+    } catch (error) {
+        console.warn(`Unable to auto-load ${AUTO_IMPORT_FILE}.`, error);
     }
 }
 
@@ -186,7 +183,7 @@ function exportData() {
     const anchor = document.createElement('a');
     const stamp = new Date().toISOString().slice(0, 10);
     anchor.href = url;
-    anchor.download = `salary-tracker-backup-${stamp}.json`;
+    anchor.download = 'data.json';
     anchor.click();
     URL.revokeObjectURL(url);
 }
