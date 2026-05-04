@@ -150,7 +150,6 @@ function updateUI() {
 
     document.getElementById('salaryDisplay').innerText = totalSalary.toLocaleString('en-IN');
     document.getElementById('expensesDisplay').innerText = totalExpenses.toLocaleString('en-IN');
-    document.getElementById('expensesDisplayTotal').innerText = totalExpenses.toLocaleString('en-IN');
     document.getElementById('balance').innerText = balance.toLocaleString('en-IN');
 }
 
