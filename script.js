@@ -145,3 +145,85 @@ function toggleHistoryList() {
         loadMonth(choice);
     }
 }
+
+function exportData() {
+    const payload = {
+        exportedAt: new Date().toISOString(),
+        version: 1,
+        historyData
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0, 10);
+    anchor.href = url;
+    anchor.download = `salary-tracker-backup-${stamp}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+}
+
+function triggerImport() {
+    document.getElementById('importFileInput').click();
+}
+
+function isValidHistoryData(data) {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+        return false;
+    }
+
+    return Object.values(data).every(month => {
+        if (!month || typeof month !== 'object' || Array.isArray(month)) {
+            return false;
+        }
+
+        if (typeof month.salary !== 'number' || Number.isNaN(month.salary)) {
+            return false;
+        }
+
+        if (!Array.isArray(month.expenses)) {
+            return false;
+        }
+
+        return month.expenses.every(expense => (
+            expense &&
+            typeof expense.date === 'string' &&
+            typeof expense.desc === 'string' &&
+            typeof expense.amount === 'number' &&
+            !Number.isNaN(expense.amount)
+        ));
+    });
+}
+
+function importData(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(loadEvent) {
+        try {
+            const content = JSON.parse(loadEvent.target.result);
+            const importedHistory = content?.historyData ?? content;
+
+            if (!isValidHistoryData(importedHistory)) {
+                throw new Error('Invalid backup file format.');
+            }
+
+            historyData = importedHistory;
+            saveAndSync();
+
+            const months = Object.keys(historyData).sort();
+            const latestMonth = months[months.length - 1] || new Date().toISOString().slice(0, 7);
+            loadMonth(latestMonth);
+
+            alert('Backup restored successfully.');
+        } catch (error) {
+            alert('Could not import this file. Please select a valid backup JSON.');
+            console.error(error);
+        } finally {
+            event.target.value = '';
+        }
+    };
+
+    reader.readAsText(file);
+}
