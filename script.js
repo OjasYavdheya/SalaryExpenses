@@ -3,7 +3,8 @@
 let historyData = {};
 let currentMonthKey = ""; // Stores the currently viewed month (e.g., "2026-04")
 
-const AUTO_IMPORT_FILE = 'data.json';
+const AUTO_IMPORT_FILE = 'data.js';
+const AUTO_IMPORT_VARIABLE = 'SALARY_EXPENSES_DATA';
 
 window.onload = async function() {
     const today = new Date();
@@ -13,20 +14,22 @@ window.onload = async function() {
     document.getElementById('date').valueAsDate = today;
     document.getElementById('salaryMonthInput').value = yearMonth;
 
-    await autoImportDataFromLocalJson();
+    await autoImportDataFromLocalJs();
 
     // Load the current month if it exists, otherwise leave blank
     loadMonth(yearMonth);
 };
 
-async function autoImportDataFromLocalJson() {
+async function autoImportDataFromLocalJs() {
     try {
         const response = await fetch(AUTO_IMPORT_FILE, { cache: 'no-store' });
         if (!response.ok) {
             return;
         }
 
-        const content = await response.json();
+        const scriptText = await response.text();
+        const sandbox = {};
+        const content = new Function('window', `${scriptText}; return window.${AUTO_IMPORT_VARIABLE};`)(sandbox);
         const importedHistory = content?.historyData ?? content;
 
         if (!isValidHistoryData(importedHistory)) {
@@ -178,12 +181,15 @@ function exportData() {
         historyData
     };
 
+    const dataScript = `window.${AUTO_IMPORT_VARIABLE} = ${JSON.stringify(payload, null, 2)};\n`;
+    const blob = new Blob([dataScript], { type: 'application/javascript' });
+
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     const stamp = new Date().toISOString().slice(0, 10);
     anchor.href = url;
-    anchor.download = 'data.json';
+    anchor.download = 'data.js';
     anchor.click();
     URL.revokeObjectURL(url);
 }
