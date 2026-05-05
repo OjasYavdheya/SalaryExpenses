@@ -27,6 +27,10 @@
             <span class="material-symbols-outlined">download</span>
         </button>
 
+        <button class="nav-icon" onclick="triggerImportData()" title="Import Data (.js)">
+            <span class="material-symbols-outlined">upload</span>
+        </button>
+
         <button class="nav-icon">
             <span class="material-symbols-outlined">settings</span>
         </button>
@@ -108,6 +112,8 @@
             </div>
         </div>
     </div>
+
+    <input type="file" id="importFileInput" accept=".js,application/javascript" hidden onchange="handleImportData(event)">
 
     <script src="script.js"></script>
 </body>

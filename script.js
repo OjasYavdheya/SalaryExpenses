@@ -3,10 +3,9 @@
 let historyData = {};
 let currentMonthKey = ""; // Stores the currently viewed month (e.g., "2026-04")
 
-const AUTO_IMPORT_FILE = 'data.js';
 const AUTO_IMPORT_VARIABLE = 'SALARY_EXPENSES_DATA';
 
-window.onload = async function() {
+window.onload = function() {
     const today = new Date();
     const yearMonth = today.toISOString().substring(0, 7);
 
@@ -14,33 +13,40 @@ window.onload = async function() {
     document.getElementById('date').valueAsDate = today;
     document.getElementById('salaryMonthInput').value = yearMonth;
 
-    await autoImportDataFromLocalJs();
-
     // Load the current month if it exists, otherwise leave blank
     loadMonth(yearMonth);
 };
 
-async function autoImportDataFromLocalJs() {
-    try {
-        const response = await fetch(AUTO_IMPORT_FILE, { cache: 'no-store' });
-        if (!response.ok) {
-            return;
-        }
+function triggerImportData() {
+    const fileInput = document.getElementById('importFileInput');
+    fileInput.value = '';
+    fileInput.click();
+}
 
-        const scriptText = await response.text();
+async function handleImportData(event) {
+    const file = event.target.files?.[0];
+    if (!file) {
+        return;
+    }
+
+    try {
+        const scriptText = await file.text();
         const sandbox = {};
         const content = new Function('window', `${scriptText}; return window.${AUTO_IMPORT_VARIABLE};`)(sandbox);
         const importedHistory = content?.historyData ?? content;
 
         if (!isValidHistoryData(importedHistory)) {
-            console.warn(`Skipped ${AUTO_IMPORT_FILE}: Invalid format.`);
+            alert('Invalid data format in selected file.');
             return;
         }
 
         historyData = importedHistory;
-        console.info(`Auto-loaded data from ${AUTO_IMPORT_FILE}.`);
+        saveAndSync();
+        loadMonth(currentMonthKey || Object.keys(historyData).sort().reverse()[0]);
+        alert('Data imported successfully.');
     } catch (error) {
-        console.warn(`Unable to auto-load ${AUTO_IMPORT_FILE}.`, error);
+        console.error('Unable to import selected file.', error);
+        alert('Unable to import selected file. Please choose a valid data.js export.');
     }
 }
 
