@@ -184,7 +184,6 @@ function exportData() {
     const dataScript = `window.${AUTO_IMPORT_VARIABLE} = ${JSON.stringify(payload, null, 2)};\n`;
     const blob = new Blob([dataScript], { type: 'application/javascript' });
 
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     const stamp = new Date().toISOString().slice(0, 10);
